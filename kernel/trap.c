@@ -73,8 +73,16 @@ usertrap(void)
                0) {
     // page fault on lazily-allocated page
   } else {
-    printk("usertrap(): unexpected scause 0x%lx pid=%d\n", r_scause(), p->pid);
-    printk("            sepc=0x%lx stval=0x%lx\n", r_sepc(), r_stval());
+    uint64 scause = r_scause();
+    uint64 stval = r_stval();
+    if ((scause == 13 || scause == 15) && stval < PGSIZE) {
+      printk("usertrap(): null pointer access pid=%d\n", p->pid);
+      printk("            scause=0x%lx sepc=0x%lx stval=0x%lx\n",
+             scause, r_sepc(), stval);
+    } else {
+      printk("usertrap(): unexpected scause 0x%lx pid=%d\n", scause, p->pid);
+      printk("            sepc=0x%lx stval=0x%lx\n", r_sepc(), stval);
+    }
     setkilled(p);
   }
 
