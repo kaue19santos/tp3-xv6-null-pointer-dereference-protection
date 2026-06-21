@@ -146,6 +146,10 @@ UPROGS=\
 	$U/_forphan\
 	$U/_dorphan\
 	$U/_nullread\
+	$U/_nullwrite\
+	$U/_nullsyscall\
+	$U/_normalproc\
+	$U/_stresstest\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
