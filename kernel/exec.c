@@ -29,7 +29,7 @@ kexec(char *path, char **argv)
 {
   char *s, *last;
   int i, off;
-  uint64 argc, sz = 0, sp, ustack[MAXARG], stackbase;
+  uint64 argc, sz = PGSIZE, sp, ustack[MAXARG], stackbase;
   struct elfhdr elf;
   struct inode *ip;
   struct proghdr ph;
@@ -67,6 +67,8 @@ kexec(char *path, char **argv)
     if (ph.vaddr + ph.memsz < ph.vaddr)
       goto bad;
     if (ph.vaddr % PGSIZE != 0)
+      goto bad;
+    if (ph.vaddr < PGSIZE)
       goto bad;
     uint64 sz1;
     if ((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz,
@@ -129,6 +131,9 @@ kexec(char *path, char **argv)
     if (*s == '/')
       last = s + 1;
   safestrcpy(p->name, last, sizeof(p->name));
+
+  if (elf.entry < PGSIZE)
+    goto bad;
 
   // Commit to the user image.
   oldpagetable = p->pagetable;
