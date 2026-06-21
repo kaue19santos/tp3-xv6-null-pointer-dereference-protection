@@ -248,12 +248,20 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
 uint64
 uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 {
+
+  if (newsz < PGSIZE)
+    newsz = PGSIZE;
+
   if (newsz >= oldsz)
     return oldsz;
 
   if (PGROUNDUP(newsz) < PGROUNDUP(oldsz)) {
-    int npages = (PGROUNDUP(oldsz) - PGROUNDUP(newsz)) / PGSIZE;
-    uvmunmap(pagetable, PGROUNDUP(newsz), npages, 1);
+    uint64 start = PGROUNDUP(newsz);
+    if (start < PGSIZE)
+      start = PGSIZE;
+    int npages = (PGROUNDUP(oldsz) - start) / PGSIZE;
+    if (npages > 0)
+      uvmunmap(pagetable, start, npages, 1);
   }
 
   return newsz;
@@ -284,8 +292,11 @@ freewalk(pagetable_t pagetable)
 void
 uvmfree(pagetable_t pagetable, uint64 sz)
 {
-  if (sz > 0)
-    uvmunmap(pagetable, 0, PGROUNDUP(sz) / PGSIZE, 1);
+  if (sz > PGSIZE) {
+    uint64 npages = (PGROUNDUP(sz) - PGSIZE) / PGSIZE;
+    if (npages > 0)
+      uvmunmap(pagetable, PGSIZE, npages, 1);
+  }
   freewalk(pagetable);
 }
 
